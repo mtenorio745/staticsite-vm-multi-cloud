@@ -4,20 +4,16 @@ on:
   push:
     branches:
     - develop
-    paths:
-    -  '**.tf'
 
 env:
   TERRAFORM_VERSION: 1.6.2
 
 jobs:
-
   on-aws:
     name: AWS provider
     runs-on: ubuntu-latest
- 
-    steps:
 
+    steps:
     - name: Step 01 - Terraform Setup
       uses: hashicorp/setup-terraform@v2
       with:
@@ -28,6 +24,11 @@ jobs:
 
     - name: Step 03 - CheckOut GitHub Repo
       uses: actions/checkout@v3
+
+    - name: Step 03.1 - Run Checkov Static Code Analysis
+      run: |
+        pip install checkov
+        checkov --directory ./terraform/aws 
 
     - name: Step 04 - Authenticate with AWS
       uses: aws-actions/configure-aws-credentials@v2
@@ -44,8 +45,7 @@ jobs:
       run : terraform -chdir=./terraform/aws validate
 
     - name: Step 07 - Terraform Plan
-      run : terraform -chdir=./terraform/aws plan -input=false -out tfplan
-      # run : terraform -chdir=./terraform/aws plan -input=false -destroy -out tfplan
+      run : terraform -chdir=./terraform/aws plan -input=false -destroy -out tfplan
 
     - name: Step 08 - Terraform Apply
       run : terraform -chdir=./terraform/aws apply -auto-approve -input=false tfplan
@@ -61,9 +61,8 @@ jobs:
         ARM_CLIENT_SECRET  : ${{ secrets.ARM_CLIENT_SECRET }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
         ARM_TENANT_ID      : ${{ secrets.ARM_TENANT_ID }}
-    
-    steps:
 
+    steps:
     - name: Step 01 - Terraform Setup
       uses: hashicorp/setup-terraform@v2
       with:
@@ -74,6 +73,11 @@ jobs:
 
     - name: Step 03 - CheckOut GitHub Repo
       uses: actions/checkout@v3
+
+    - name: Step 03.1 - Run Checkov Static Code Analysis
+      run: |
+        pip install checkov
+        checkov --directory ./terraform/azure 
 
     - name: Step 04 - Authenticate with Azure
       uses: azure/login@v1
@@ -87,12 +91,10 @@ jobs:
       run : terraform -chdir=./terraform/azure validate
 
     - name: Step 07 - Terraform Plan
-      run : terraform -chdir=./terraform/azure plan -input=false -out tfplan
-      # run : terraform -chdir=./terraform/azure plan -input=false -destroy -out tfplan
+      run : terraform -chdir=./terraform/azure plan -input=false -destroy -out tfplan
 
     - name: Step 08 - Terraform Apply
       run : terraform -chdir=./terraform/azure apply -auto-approve -input=false tfplan
 
     - name: Step 09 - Terraform Show
       run : terraform -chdir=./terraform/azure show
-      
